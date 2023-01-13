@@ -50,7 +50,7 @@
         </div>
         <div class="window-body">
             <div class="field-row-stacked">
-                <label style="margin: auto; display: block;" for="songurl">Link to song or album</label>
+                <label style="margin: auto; display: block;" for="songurl">Link to song/album/playlist/user/artist</label>
                 <input style="margin: auto; display: block; width: 200px;" id="songurl" type="url" />
                 <section class="field-row" style="justify-content: flex-end">
                     <button onclick="sendSongUrl(this)">Get images</button>
@@ -71,21 +71,8 @@
             </menu>
         </div>
     </div>
-    <div class="window center" hidden="true" id="spotifyImagesWindow">
-        <div class="title-bar">
-            <div class="title-bar-text">Playlist Image</div>
-            <div class="title-bar-controls">
-                <button aria-label="Close" onclick="hideSpotifyImagesWindow()"></button>
-            </div>
-        </div>
-        <div class="window-body" id="articles">
-            <menu role="tablist" id="tabList">
-
-            </menu>
-        </div>
-    </div>
     <script src="static/js/index.min.js"></script>
-    <script src="static/js/spotify.min.js"></script>
+    <script src="static/js/spotify.js"></script>
 </body>
 
 </html>

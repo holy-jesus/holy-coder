@@ -3,8 +3,8 @@ from base64 import b64encode
 from random import choice
 from time import time
 
-from aiohttp import ClientSession
 import orjson
+from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 from cache import AsyncTTL
 from dotenv import load_dotenv
@@ -143,23 +143,28 @@ class Spotify:
         )
 
     @AsyncTTL(time_to_live=86400, maxsize=512)
-    async def get_images(self, id: str, type: str):
+    async def get_images(self, id: str, type: str, retry = False):
         if type in ("track", "album", "playlist", "user"):
             if not self.official_api["token"] or time() >= self.official_api["expires"]:
                 await self.get_token()
             headers = self.official_headers.copy()
             headers["Authorization"] = f"Bearer {self.official_api['token']}"
-            json = await self._make_request(
+            json, status_code = await self._make_request(
                 f"https://api.spotify.com/v1/{type}s/{id}",
                 headers=headers,
                 params={"fields": "images"} if type == "playlist" else None,
             )
+            if status_code == 401 and not retry:
+                await self.get_token()
+                return self.get_images(id, type, True)
+            elif status_code == 401 and retry:
+                raise Exception("Something went very wrong...")
             if "error" in json:
-                return json
+                return json, status_code
             elif type == "track":
-                return {"data": json["album"]["images"]}
-            return {"data": json["images"]}
-        else:
+                return {"data": [image['url'] for image in json["album"]["images"]]}, 200
+            return {"data": [image['url'] for image in json["images"]]}, 200
+        elif type == "artist":
             if (
                 not self.internal_api["client-token"]
                 or time() >= self.internal_api["client-token-expires"]
@@ -185,22 +190,31 @@ class Spotify:
             headers = self.internal_headers.copy()
             headers["authorization"] = f"Bearer {self.internal_api['authorization']}"
             headers["client-token"] = self.internal_api["client-token"]
-            json = await self._make_request(
+            json, status_code = await self._make_request(
                 f"https://api-partner.spotify.com/pathfinder/v1/query",
                 headers=headers,
                 params=params,
             )
+            if json["data"] is None:
+                return {"error": {"message": "Wrong artist ID"}}, 400
+            elif status_code == 401 and not retry:
+                await self.get_token()
+                return self.get_images(id, type, True)
+            elif status_code == 401 and retry:
+                raise Exception("Something went very wrong...")
             visuals = json["data"]["artistUnion"]["visuals"]
             images = []
             if visuals["avatarImage"]:
-                images += visuals["avatarImage"]["sources"]
+                images += [image['url'] for image in visuals["avatarImage"]["sources"]]
             if visuals["gallery"]:
                 for i in visuals["gallery"]["items"]:
                     for source in i["sources"]:
-                        images.append(source)
+                        images.append(source['url'])
             if visuals["headerImage"]:
-                images += visuals["headerImage"]["sources"]
-            return {"data": images}
+                images += [image['url'] for image in visuals["headerImage"]["sources"]]
+            return {"data": images}, 200
+        else:
+            return {"error": {"message": "Incorrect type"}}, 400
 
     async def _make_request(self, url: str, headers: dict, params: dict | None = None):
         response = await self.session.get(
@@ -208,4 +222,4 @@ class Spotify:
             headers=headers,
             params=params,
         )
-        return await response.json(loads=orjson.loads)
+        return (await response.json(loads=orjson.loads), response.status)
