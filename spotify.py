@@ -192,11 +192,14 @@ class Spotify:
             )
             visuals = json["data"]["artistUnion"]["visuals"]
             images = []
-            for i in visuals["gallery"]["items"]:
-                for source in i["sources"]:
-                    images.append(source)
-            images += visuals["avatarImage"]["sources"]
-            images += visuals["headerImage"]["sources"]
+            if visuals["avatarImage"]:
+                images += visuals["avatarImage"]["sources"]
+            if visuals["gallery"]:
+                for i in visuals["gallery"]["items"]:
+                    for source in i["sources"]:
+                        images.append(source)
+            if visuals["headerImage"]:
+                images += visuals["headerImage"]["sources"]
             return {"data": images}
 
     async def _make_request(self, url: str, headers: dict, params: dict | None = None):
