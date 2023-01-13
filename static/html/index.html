@@ -1,0 +1,93 @@
+<html>
+
+<head>
+    <link rel="stylesheet" href="https://unpkg.com/xp.css">
+    <style>
+        .center {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            -webkit-transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%);
+        }
+
+        .pixelatedText {
+            text-decoration: none;
+            color: #000;
+            font-family: "Pixelated MS Sans Serif", Arial;
+            font-size: 11px;
+        }
+    </style>
+</head>
+
+<body style="background-image: url('static/images/Bliss.png'); background-size: cover;">
+    <div class="window center" style="width: 320px;" id="mainWindow">
+        <div class="title-bar">
+            <div class="title-bar-text">My projects</div>
+            <div class="title-bar-controls">
+            </div>
+        </div>
+        <div class="window-body">
+
+            <ul class="tree-view">
+                <li><a href="https://holy-bot.ru">Twitch bot that recognizes music</a></li>
+                <li><a onclick="showSpotifyWindow()" href="#">Downloader of images of tracks and albums from spotify</a>
+                </li>
+            </ul>
+
+        </div>
+        <div class="status-bar">
+            <p class="status-bar-field">Made by holy_jesus</p>
+            <p class="status-bar-field"><a href="https://yoomoney.ru/to/41001995277785">Donate</a></p>
+        </div>
+    </div>
+    <div class="window center" style="width: 240px;" hidden="true" id="spotifyWindow">
+        <div class="title-bar">
+            <div class="title-bar-text">Spotify image downloader</div>
+            <div class="title-bar-controls">
+                <button aria-label="Close" onclick="showMainWindow()"></button>
+            </div>
+        </div>
+        <div class="window-body">
+            <div class="field-row-stacked">
+                <label style="margin: auto; display: block;" for="songurl">Link to song or album</label>
+                <input style="margin: auto; display: block; width: 200px;" id="songurl" type="url" />
+                <section class="field-row" style="justify-content: flex-end">
+                    <button onclick="sendSongUrl(this)">Get images</button>
+                </section>
+            </div>
+        </div>
+    </div>
+    <div class="window center" hidden="true" id="spotifyImagesWindow">
+        <div class="title-bar">
+            <div class="title-bar-text">Images</div>
+            <div class="title-bar-controls">
+                <button aria-label="Close" onclick="hideSpotifyImagesWindow()"></button>
+            </div>
+        </div>
+        <div class="window-body" id="articles">
+            <menu role="tablist" id="tabList">
+
+            </menu>
+        </div>
+    </div>
+    <div class="window center" hidden="true" id="spotifyImagesWindow">
+        <div class="title-bar">
+            <div class="title-bar-text">Playlist Image</div>
+            <div class="title-bar-controls">
+                <button aria-label="Close" onclick="hideSpotifyImagesWindow()"></button>
+            </div>
+        </div>
+        <div class="window-body" id="articles">
+            <menu role="tablist" id="tabList">
+
+            </menu>
+        </div>
+    </div>
+    
+    <script src="static/js/index.js"></script>
+    <script src="static/js/spotify.js"></script>
+
+</body>
+
+</html>
