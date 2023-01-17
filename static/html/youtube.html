@@ -1,0 +1,79 @@
+<html>
+
+<head>
+    <link rel="stylesheet" href="https://unpkg.com/xp.css">
+    <style>
+        .center {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            -webkit-transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%);
+        }
+
+        .pixelatedText {
+            text-decoration: none;
+            color: #000;
+            font-family: "Pixelated MS Sans Serif", Arial;
+            font-size: 11px;
+        }
+    </style>
+    <title>holy-coder</title>
+    <meta name="description" content="Youtube video downloader">
+</head>
+
+<body style="background-image: url('static/images/Bliss.png'); background-size: cover;">
+    <div class="window center" style="width: 240px;" id="youtubeWindow">
+        <div class="title-bar">
+            <div class="title-bar-text">Youtube video downloader</div>
+            <div class="title-bar-controls">
+                <a href="/"><button aria-label="Close"></button></a>
+            </div>
+        </div>
+        <div class="window-body">
+            <div class="field-row-stacked">
+                <label style="margin: auto; display: block;" for="videoUrl">Link to youtube video</label>
+                <input style="margin: auto; display: block; width: 200px;" id="videoUrl" type="url" />
+                <div class="field-row" style="margin: auto; display: block;">
+                    <input id="type0" type="radio" name="type" value="0" checked>
+                    <label for="type0">Video</label>
+                    <a></a>
+                    <input id="type1" type="radio" name="type" value="1">
+                    <label for="type1">Audio</label>
+                </div>
+                <br>
+                <section class="field-row" style="justify-content: flex-end;">
+                    <button onclick="startDownloadingVideo(this)">Download Video</button>
+                </section>
+            </div>
+        </div>
+    </div>
+    <div class="window center" style="width: 140px;" id="loadingWindow" hidden>
+        <div class="title-bar">
+            <div class="title-bar-text">Please, wait...</div>
+        </div>
+        <div class="window-body">
+            <progress style="margin: auto; display: block;"></progress>
+        </div>
+    </div>
+    <div class="window center" style="width: 240px;" id="youtubeVideoWindow" hidden>
+        <div class="title-bar">
+            <div class="title-bar-text">Video</div>
+            <div class="title-bar-controls">
+                <button aria-label="Close" onclick="hideVideoWindow()"></button>
+            </div>
+        </div>
+        <div class="window-body">
+            <p class="pixelatedText">You can download the video within an hour</p>
+            <p class="pixelatedText">URL: <a href="" id="urlForDownloading"></a></p>
+            <section class="field-row" style="justify-content: flex-end;">
+                <a href="" id="aForButton">
+                    <button>Download Video</button>
+                </a>
+            </section>
+        </div>
+    </div>
+    <script src="static/js/youtube.min.js"></script>
+</body>
+
+</html>

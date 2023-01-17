@@ -33,6 +33,7 @@
                 <li><a href="https://holy-bot.ru">Twitch bot that recognizes music</a></li>
                 <li><a onclick="showSpotifyWindow()" href="#">Downloader of images of tracks and albums from spotify</a>
                 </li>
+                <li><a onclick="showYoutubeWindow()" href="#">Youtube image downloader</a></li>
             </ul>
 
         </div>
@@ -45,12 +46,13 @@
         <div class="title-bar">
             <div class="title-bar-text">Spotify image downloader</div>
             <div class="title-bar-controls">
-                <button aria-label="Close" onclick="showMainWindow()"></button>
+                <button aria-label="Close" onclick="showMainWindow(this)"></button>
             </div>
         </div>
         <div class="window-body">
             <div class="field-row-stacked">
-                <label style="margin: auto; display: block;" for="songurl">Link to song/album/playlist/user/artist</label>
+                <label style="margin: auto; display: block;" for="songurl">Link to
+                    song/album/playlist/user/artist</label>
                 <input style="margin: auto; display: block; width: 200px;" id="songurl" type="url" />
                 <section class="field-row" style="justify-content: flex-end">
                     <button onclick="sendSongUrl(this)">Get images</button>
@@ -71,7 +73,58 @@
             </menu>
         </div>
     </div>
+    <div class="window center" style="width: 240px;" id="youtubeWindow" hidden>
+        <div class="title-bar">
+            <div class="title-bar-text">Youtube video downloader</div>
+            <div class="title-bar-controls">
+                <button aria-label="Close" onclick="showMainWindow(this)"></button>
+            </div>
+        </div>
+        <div class="window-body">
+            <div class="field-row-stacked">
+                <label style="margin: auto; display: block;" for="videoUrl">Link to youtube video</label>
+                <input style="margin: auto; display: block; width: 200px;" id="videoUrl" type="url" />
+                <div class="field-row" style="margin: auto; display: block;">
+                    <input id="type0" type="radio" name="type" value="0" checked>
+                    <label for="type0">Video</label>
+                    <a></a>
+                    <input id="type1" type="radio" name="type" value="1">
+                    <label for="type1">Audio</label>
+                </div>
+                <br>
+                <section class="field-row" style="justify-content: flex-end;">
+                    <button onclick="startDownloadingVideo(this)">Download Video</button>
+                </section>
+            </div>
+        </div>
+    </div>
+    <div class="window center" style="width: 140px;" id="loadingWindow" hidden>
+        <div class="title-bar">
+            <div class="title-bar-text">Please, wait...</div>
+        </div>
+        <div class="window-body">
+            <progress style="margin: auto; display: block;"></progress>
+        </div>
+    </div>
+    <div class="window center" style="width: 240px;" id="youtubeVideoWindow" hidden>
+        <div class="title-bar">
+            <div class="title-bar-text">Video</div>
+            <div class="title-bar-controls">
+                <button aria-label="Close" onclick="hideVideoWindow()"></button>
+            </div>
+        </div>
+        <div class="window-body">
+            <p class="pixelatedText">You can download the video within an hour</p>
+            <p class="pixelatedText">URL: <a href="" id="urlForDownloading"></a></p>
+            <section class="field-row" style="justify-content: flex-end;">
+                <a href="" id="aForButton">
+                    <button>Download Video</button>
+                </a>
+            </section>
+        </div>
+    </div>
     <script src="static/js/index.min.js"></script>
+    <script src="static/js/youtube.min.js"></script>
     <script src="static/js/spotify.min.js"></script>
 </body>
 
