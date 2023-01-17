@@ -12,7 +12,12 @@ function showYoutubeWindow() {
     youtubeWindow.removeAttribute("hidden");
 }
 
-function showMainWindow(window) {
-    window.setAttribute("hidden", "true");
-    mainWindow.removeAttribute("hidden");
+function hideYoutubeWindow() {
+    youtubeWindow.setAttribute("hidden", "true")
+    mainWindow.removeAttribute("hidden")
+}
+
+function hideSpotifyWindow() {
+    spotifyWindow.setAttribute("hidden", "true")
+    mainWindow.removeAttribute("hidden")
 }
