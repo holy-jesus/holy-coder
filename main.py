@@ -46,8 +46,6 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.mount("/static", StaticFiles(directory="./static"), name="static")
 
-downloaded = {0: {}, 1: {}}
-
 
 async def open_template(filename: str):
     file = await aiofiles.open(TEMPLATES_PATH + filename, "r")
@@ -99,64 +97,69 @@ async def spotify_get_images(request: Request, data: SpotifyInfo):
 
 @app.get("/youtube")
 async def youtube(id: str = None, type: int = None):
+    ext = {0: "mp4", 1: "mp3"}.get(type, None)
     if id is None:
         return HTMLResponse(await open_template("youtube.html"))
-    elif type not in downloaded:
+    elif ext is None:
         return Response(
             orjson.dumps({"error": {"message": "Invalid type"}}),
             400,
             media_type="application/json",
         )
-    elif id in downloaded[type]:
-        return Response(
-            orjson.dumps(downloaded[type][id]), media_type="application/json"
-        )
+    elif os.path.exists(f"/tmp/youtube/{id}.{ext}") and os.path.exists(f"/tmp/youtube/{id}.{ext}.done"):
+        return Response(orjson.dumps(True), media_type="application/json")
+    elif os.path.exists(f"/tmp/youtube/{id}.{ext}.done") and not os.path.exists(f"/tmp/youtube/{id}.{ext}"):
+        return Response(orjson.dumps(None), media_type="application/json")
     else:
-        return Response(
-            orjson.dumps({"error": {"message": "Invalid ID"}}),
-            400,
-            media_type="application/json",
-        )
+        return Response(orjson.dumps(False), media_type="application/json")
 
 
 @app.post("/youtube")
 @limiter.limit("2/minute")
-async def youtube_post(request: Request, data: YoutubeInfo, backgroud_tasks: BackgroundTasks):
-    if data.type not in downloaded:
+async def youtube_post(
+    request: Request, data: YoutubeInfo, backgroud_tasks: BackgroundTasks
+):
+    ext = {0: "mp4", 1: "mp3"}.get(data.type, None)
+    file_path = f"/tmp/youtube/{data.id}.{ext}"
+    if ext is None:
         return Response(
             orjson.dumps({"error": {"message": "Invalid type"}}),
             400,
             media_type="application/json",
         )
-    elif data.id not in downloaded[data.type]:
+    elif not os.path.exists(file_path + ".done"):
         loop = asyncio.get_event_loop()
-        backgroud_tasks.add_task(download_video, downloaded, loop, data.id, data.type)
-        return Response(orjson.dumps(False), 200, media_type="application/json")
+        backgroud_tasks.add_task(download_video, loop, data.id, data.type)
+        return Response(orjson.dumps(False), media_type="application/json")
+    elif os.path.exists(file_path):
+        return Response(orjson.dumps(True), media_type="application/json")
     else:
-        return Response(orjson.dumps(downloaded[data.type][data.id]), 200, media_type="application/json")
+        return Response(orjson.dumps(None), media_type="application/json")
 
 
 @app.get("/youtube/download")
 async def youtube_download(id: str, type: int):
-    if type not in downloaded:
+    ext = {0: "mp4", 1: "mp3"}.get(type, None)
+    file_path = f"/tmp/youtube/{id}.{ext}"
+    if ext is None:
         return Response(
             orjson.dumps({"error": {"message": "Invalid type"}}),
             400,
             media_type="application/json",
         )
-    elif id not in downloaded[type]:
+    elif not os.path.exists(file_path + ".done") or not os.path.exists(file_path):
         return Response(
             orjson.dumps({"error": {"message": "Invalid ID"}}),
             400,
             media_type="application/json",
         )
     else:
-        ext = "mp3" if type else "mp4"
         filename = "audio" if type else "video"
         return FileResponse(
-            f"/tmp/youtube/{id}.{ext}",
+            file_path,
             filename=f"{filename}.{ext}",
         )
+    
 
 
 if DEBUG:

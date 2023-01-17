@@ -1,17 +1,16 @@
 import asyncio
 import os
+import glob
 
 from yt_dlp import YoutubeDL
 
 
-async def delete_file(id: str, type: int, downloaded: dict):
+async def delete_file(filenames: list[str]):
     await asyncio.sleep(3600)
-    ext = "mp3" if type else "mp4"
-    file = f"/tmp/youtube/{id}.{ext}"
-    if os.path.exists(file):
-        os.remove(file)
-    downloaded[type].pop(id, None)
-
+    for filename in filenames:
+        if os.path.exists(filename):
+            os.remove(filename)
+    
 
 def match_filter(info_dict, *, incomplete: bool):
     if info_dict.get("is_live", False):
@@ -19,10 +18,7 @@ def match_filter(info_dict, *, incomplete: bool):
     return None
 
 
-def download_video(
-    downloaded: dict, loop: asyncio.AbstractEventLoop, video_id: str, audio_only: int
-):
-    downloaded[audio_only][video_id] = False
+def download_video(loop: asyncio.AbstractEventLoop, video_id: str, audio_only: int):
     format = "bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4"
     postprocessors = []
     if audio_only:
@@ -39,8 +35,8 @@ def download_video(
     }
     with YoutubeDL(ydl_options) as ydl:
         ydl.download(["https://www.youtube.com/watch?v=" + video_id])
-    if os.path.exists(f"/tmp/youtube/{video_id}.{'mp3' if audio_only else 'mp4'}"):
-        downloaded[audio_only][video_id] = True
-    else:
-        downloaded[audio_only][video_id] = None
-    loop.create_task(delete_file(video_id, audio_only, downloaded))
+    ext = {0: "mp4", 1: "mp3"}.get(audio_only, None)
+    file = f"/tmp/youtube/{video_id}.{ext}"
+    with open(f"{file}.done", "w") as f:
+        ...
+    loop.create_task(delete_file([file, file + ".done"]))
