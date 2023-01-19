@@ -56,9 +56,12 @@ async function showLoadingWindow(id, type) {
             if (json == true) {
                 done = true;
             } else if (json == null) {
-                alert("Sorry I can't download this video")
+                alert("Sorry I can't download this video");
                 done = null;
             }
+        } else if (xhr.readyState === 4) {
+            alert("Something went wrong. Please try again later");
+            done = null;
         }
     }
     while (true) {
@@ -68,7 +71,7 @@ async function showLoadingWindow(id, type) {
         xhr.setRequestHeader("Content-Type", "application/json");
         xhr.send(null);
         await sleep(1);
-        if (done == true || done == null) break;
+        if (done != false) break;
     };
     if (done == true) {
         await showVideoWindow(id, type);

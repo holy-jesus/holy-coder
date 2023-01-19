@@ -48,14 +48,17 @@ app.mount("/static", StaticFiles(directory="./static"), name="static")
 
 
 async def open_template(filename: str):
-    file = await aiofiles.open(TEMPLATES_PATH + filename, "r")
-    content = await file.read()
-    await file.close()
+    async with aiofiles.open(TEMPLATES_PATH + filename, "r") as f:
+        content = await f.read()
     return content
 
+async def read_status_file(id: str, type: int):
+    async with aiofiles.open(f"/tmp/youtube/{id}{type}", "rb") as f:
+        json = orjson.loads(await f.read())
+    return json
 
 def delete_all_temp_files():
-    for file in glob.glob("/tmp/youtube/*.mp*"):
+    for file in glob.glob("/tmp/youtube/*"):
         os.remove(file)
 
 
@@ -64,6 +67,8 @@ async def startup_event():
     global spotify
     spotify = Spotify(ClientSession())
     delete_all_temp_files()
+    if not os.path.exists("/tmp/youtube/"):
+        os.mkdir("/tmp/youtube/")
 
 
 @app.on_event("shutdown")
@@ -97,21 +102,25 @@ async def spotify_get_images(request: Request, data: SpotifyInfo):
 
 @app.get("/youtube")
 async def youtube(id: str = None, type: int = None):
-    ext = {0: "mp4", 1: "mp3"}.get(type, None)
+    status_file = f"/tmp/youtube/{id}{type}"
+    status_file_exists = os.path.exists(status_file)
     if id is None:
         return HTMLResponse(await open_template("youtube.html"))
-    elif ext is None:
+    elif type not in (0, 1):
         return Response(
             orjson.dumps({"error": {"message": "Invalid type"}}),
             400,
             media_type="application/json",
         )
-    elif os.path.exists(f"/tmp/youtube/{id}.{ext}") and os.path.exists(f"/tmp/youtube/{id}.{ext}.done"):
-        return Response(orjson.dumps(True), media_type="application/json")
-    elif os.path.exists(f"/tmp/youtube/{id}.{ext}.done") and not os.path.exists(f"/tmp/youtube/{id}.{ext}"):
-        return Response(orjson.dumps(None), media_type="application/json")
+    elif not status_file_exists:
+        return Response(
+            orjson.dumps({"error": {"message": "Invalid ID"}}),
+            400,
+            media_type="application/json",
+        )
     else:
-        return Response(orjson.dumps(False), media_type="application/json")
+        info = await read_status_file(id, type)
+        return Response(orjson.dumps(info["status"]), media_type="application/json")
 
 
 @app.post("/youtube")
@@ -119,46 +128,52 @@ async def youtube(id: str = None, type: int = None):
 async def youtube_post(
     request: Request, data: YoutubeInfo, backgroud_tasks: BackgroundTasks
 ):
-    ext = {0: "mp4", 1: "mp3"}.get(data.type, None)
-    file_path = f"/tmp/youtube/{data.id}.{ext}"
-    if ext is None:
+    status_file = f"/tmp/youtube/{data.id}{data.type}"
+    status_file_exists = os.path.exists(status_file)
+    if data.type not in (0, 1):
         return Response(
             orjson.dumps({"error": {"message": "Invalid type"}}),
             400,
             media_type="application/json",
         )
-    elif not os.path.exists(file_path + ".done"):
+    elif not status_file_exists:
         loop = asyncio.get_event_loop()
         backgroud_tasks.add_task(download_video, loop, data.id, data.type)
         return Response(orjson.dumps(False), media_type="application/json")
-    elif os.path.exists(file_path):
-        return Response(orjson.dumps(True), media_type="application/json")
     else:
-        return Response(orjson.dumps(None), media_type="application/json")
+        info = await read_status_file(data.id, data.type)
+        return Response(orjson.dumps(info["status"]), media_type="application/json")
 
 
 @app.get("/youtube/download")
 async def youtube_download(id: str, type: int):
-    ext = {0: "mp4", 1: "mp3"}.get(type, None)
-    file_path = f"/tmp/youtube/{id}.{ext}"
-    if ext is None:
+    status_file = f"/tmp/youtube/{id}{type}"
+    status_file_exists = os.path.exists(status_file)
+    if type not in (0, 1):
         return Response(
             orjson.dumps({"error": {"message": "Invalid type"}}),
             400,
             media_type="application/json",
         )
-    elif not os.path.exists(file_path + ".done") or not os.path.exists(file_path):
+    elif not status_file_exists:
         return Response(
             orjson.dumps({"error": {"message": "Invalid ID"}}),
             400,
             media_type="application/json",
         )
     else:
-        filename = "audio" if type else "video"
-        return FileResponse(
-            file_path,
-            filename=f"{filename}.{ext}",
-        )
+        info = await read_status_file(id, type)
+        if info["status"]:
+            return FileResponse(
+                info["path"],
+                filename=info["filename"]
+            )
+        else:
+            return Response(
+                orjson.dumps({"error": {"message": "Invalid ID"}}),
+                400,
+                media_type="application/json",
+            )
     
 
 
