@@ -17,7 +17,7 @@ async function startDownloadingVideo(button) {
     } else if (text.includes("youtu.be/")) {
         var id = text.substring(text.indexOf(".be/") + 4, text.length)
     } else {
-        var id = null;
+        var id = "";
     }
     if (id.length == 11) {
         let xhr = new XMLHttpRequest();
