@@ -48,7 +48,7 @@ async function startDownloadingVideo(button) {
 }
 
 async function showLoadingWindow(id, type) {
-    youtubeWindow.setAttribute("hidden", true);
+    youtubeWindow.setAttribute("hidden", "true");
     loadingWindow.removeAttribute("hidden")
     let xhr = new XMLHttpRequest();
     var done = false;

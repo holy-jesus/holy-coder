@@ -181,7 +181,7 @@ async def youtube_download(id: str, type: int):
 if DEBUG:
     import uvicorn
 
-    uvicorn.run(app)
+    uvicorn.run(app, host="0.0.0.0")
 
 
 """
