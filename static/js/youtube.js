@@ -78,13 +78,14 @@ async function showLoadingWindow(id, type) {
     if (done == true) {
         await showVideoWindow(id, type);
     } else {
-        loadingWindow.setAttribute("hidden", true);
+        loadingWindow.setAttribute("hidden", "true");
         youtubeWindow.removeAttribute("hidden")
     }
 }
 
 async function showVideoWindow(id, type) {
-    loadingWindow.setAttribute("hidden", true);
+    youtubeWindow.setAttribute("hidden", "true");
+    loadingWindow.setAttribute("hidden", "true");
     youtubeVideoWindow.removeAttribute("hidden")
     a = document.getElementById("aForButton")
     a.setAttribute("href", `/youtube/download?id=${id}&type=${type}`)
@@ -94,6 +95,6 @@ async function showVideoWindow(id, type) {
 }
 
 function hideVideoWindow() {
-    youtubeVideoWindow.setAttribute("hidden", true);
+    youtubeVideoWindow.setAttribute("hidden", "true");
     youtubeWindow.removeAttribute("hidden");
 }

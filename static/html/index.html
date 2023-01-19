@@ -17,6 +17,10 @@
             font-family: "Pixelated MS Sans Serif", Arial;
             font-size: 11px;
         }
+
+        .fakeButton {
+            cursor: pointer;
+        }
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
@@ -32,14 +36,14 @@
 
             <ul class="tree-view">
                 <li><a href="https://holy-bot.ru">Twitch bot that recognizes music</a></li>
-                <li><a onclick="showSpotifyWindow()" href="#">Downloader of images of tracks and albums from spotify</a>
+                <li><a onclick="showSpotifyWindow()" class="fakeButton">Downloader of images of tracks and albums from spotify</a>
                 </li>
-                <li><a onclick="showYoutubeWindow()" href="#">Youtube video downloader</a></li>
+                <li><a onclick="showYoutubeWindow()" class="fakeButton">Youtube video downloader</a></li>
             </ul>
 
         </div>
         <div class="status-bar">
-            <p class="status-bar-field">Made by holy_jesus</p>
+            <p class="status-bar-field">Made by <a href="https://github.com/holy-jesus">holy_jesus</a></p>
             <p class="status-bar-field"><a href="https://yoomoney.ru/to/41001995277785">Support me</a></p>
         </div>
     </div>
