@@ -1,9 +1,8 @@
 import asyncio
-import os
-import glob
 import orjson
 
 import aiofiles
+from aiofiles import os
 import yt_dlp
 
 
@@ -17,8 +16,8 @@ async def delete_file(status_file):
     for filename in [status_file, info["path"]]:
         if not filename:
             continue
-        elif os.path.exists(filename):
-            os.remove(filename)
+        elif await os.path.exists(filename):
+            await os.remove(filename)
 
 
 def match_filter(info_dict, *, incomplete: bool):

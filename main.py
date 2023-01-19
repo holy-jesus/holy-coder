@@ -1,8 +1,9 @@
 import asyncio
-import os
+from os import getcwd
 import glob
 
 import aiofiles
+from aiofiles import os
 import orjson
 from aiohttp import ClientSession
 from fastapi import BackgroundTasks, FastAPI, Request, Response
@@ -21,7 +22,7 @@ except ImportError:
     from .youtube import download_video
 
 DEBUG = __name__ == "__main__"
-BASE_PATH = os.getcwd()
+BASE_PATH = getcwd()
 TEMPLATES_PATH = BASE_PATH + "/static/html/"
 
 
@@ -57,24 +58,24 @@ async def read_status_file(id: str, type: int):
         json = orjson.loads(await f.read())
     return json
 
-def delete_all_temp_files():
+async def delete_all_temp_files():
     for file in glob.glob("/tmp/youtube/*"):
-        os.remove(file)
+        await os.remove(file)
 
 
 @app.on_event("startup")
 async def startup_event():
     global spotify
     spotify = Spotify(ClientSession())
-    delete_all_temp_files()
-    if not os.path.exists("/tmp/youtube/"):
-        os.mkdir("/tmp/youtube/")
+    await delete_all_temp_files()
+    if not await os.path.exists("/tmp/youtube/"):
+        await os.mkdir("/tmp/youtube/")
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
     await spotify.session.close()
-    delete_all_temp_files()
+    await delete_all_temp_files()
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -103,7 +104,7 @@ async def spotify_get_images(request: Request, data: SpotifyInfo):
 @app.get("/youtube")
 async def youtube(id: str = None, type: int = None):
     status_file = f"/tmp/youtube/{id}{type}"
-    status_file_exists = os.path.exists(status_file)
+    status_file_exists = await os.path.exists(status_file)
     if id is None:
         return HTMLResponse(await open_template("youtube.html"))
     elif type not in (0, 1):
@@ -129,7 +130,7 @@ async def youtube_post(
     request: Request, data: YoutubeInfo, backgroud_tasks: BackgroundTasks
 ):
     status_file = f"/tmp/youtube/{data.id}{data.type}"
-    status_file_exists = os.path.exists(status_file)
+    status_file_exists = await os.path.exists(status_file)
     if data.type not in (0, 1):
         return Response(
             orjson.dumps({"error": {"message": "Invalid type"}}),
@@ -148,7 +149,7 @@ async def youtube_post(
 @app.get("/youtube/download")
 async def youtube_download(id: str, type: int):
     status_file = f"/tmp/youtube/{id}{type}"
-    status_file_exists = os.path.exists(status_file)
+    status_file_exists = await os.path.exists(status_file)
     if type not in (0, 1):
         return Response(
             orjson.dumps({"error": {"message": "Invalid type"}}),
