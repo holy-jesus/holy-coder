@@ -52,7 +52,7 @@ def download_video(loop: asyncio.AbstractEventLoop, video_id: str, audio_only: i
             a = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}")
             title = a["title"]
             downloadable = not a["is_live"]
-    except yt_dlp.DownloadError:
+    except Exception:
         downloadable = False
     if downloadable:
         info["status"] = True
