@@ -1,17 +1,28 @@
 import os
 from base64 import b64encode
+from os import getcwd
 from random import choice
 from time import time
 
+import aiofiles
 import orjson
 from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 from cache import AsyncTTL
 from dotenv import load_dotenv
+from fastapi import FastAPI, Request, Response
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 load_dotenv(os.path.expanduser("~/.env"))
 
 SPOTIFY_APP_VERSION = "1.2.3.1014.g0e1c4b4e"
+BASE_PATH = getcwd()
+TEMPLATES_PATH = BASE_PATH + "/static/html/"
 CHROME_USER_AGENT = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
@@ -41,8 +52,8 @@ def get_random_user_agent():
 
 
 class Spotify:
-    def __init__(self, session: ClientSession) -> None:
-        self.session: ClientSession = session
+    def __init__(self) -> None:
+        self.session: ClientSession = None
         self.official_api = {"token": "", "expires": 0}
         self.internal_api = {
             "client-id": "",
@@ -76,11 +87,12 @@ class Spotify:
 
     async def get_token(self):
         basic = b64encode(
-            f"{os.getenv('holy_coder_spotify_client_id')}:{os.getenv('holy_coder_spotify_client_secret')}".encode(
+            f"{os.getenv('spotifyClientId')}:{os.getenv('spotifyClientSecret')}".encode(
                 "ascii"
             )
         ).decode("ascii")
-        response = await self.session.post(
+        response = await self._make_request(
+            "POST",
             "https://accounts.spotify.com/api/token",
             headers={
                 "Authorization": f"Basic {basic}",
@@ -94,8 +106,10 @@ class Spotify:
         self.official_headers["Authorization"] = f"Bearer {self.official_api['token']}"
 
     async def get_internal_authorization(self):
-        response = await self.session.get(
-            "https://open.spotify.com/user/spotify", headers=self.internal_headers
+        response = await self._make_request(
+            "GET",
+            "https://open.spotify.com/user/spotify",
+            headers=self.internal_headers,
         )
         soup = BeautifulSoup(await response.text(), "lxml")
         raw_js = soup.find("script", {"id": "session"}).get_text()
@@ -130,7 +144,8 @@ class Spotify:
                 },
             }
         }
-        response = await self.session.post(
+        response = await self._make_request(
+            "POST",
             "https://clienttoken.spotify.com/v1/clienttoken",
             headers=headers,
             json=post_data,
@@ -143,17 +158,20 @@ class Spotify:
         )
 
     @AsyncTTL(time_to_live=86400, maxsize=512)
-    async def get_images(self, id: str, type: str, retry = False):
+    async def get_images(self, id: str, type: str, retry=False):
         if type in ("track", "album", "playlist", "user"):
             if not self.official_api["token"] or time() >= self.official_api["expires"]:
                 await self.get_token()
             headers = self.official_headers.copy()
             headers["Authorization"] = f"Bearer {self.official_api['token']}"
-            json, status_code = await self._make_request(
+            response = await self._make_request(
+                "GET",
                 f"https://api.spotify.com/v1/{type}s/{id}",
                 headers=headers,
                 params={"fields": "images"} if type == "playlist" else None,
             )
+            json = await response.json(loads=orjson.loads)
+            status_code = response.status
             if status_code == 401 and not retry:
                 await self.get_token()
                 return self.get_images(id, type, True)
@@ -162,8 +180,10 @@ class Spotify:
             if "error" in json:
                 return json, status_code
             elif type == "track":
-                return {"data": [image['url'] for image in json["album"]["images"]]}, 200
-            return {"data": [image['url'] for image in json["images"]]}, 200
+                return {
+                    "data": [image["url"] for image in json["album"]["images"]]
+                }, 200
+            return {"data": [image["url"] for image in json["images"]]}, 200
         elif type == "artist":
             if (
                 not self.internal_api["client-token"]
@@ -190,11 +210,14 @@ class Spotify:
             headers = self.internal_headers.copy()
             headers["authorization"] = f"Bearer {self.internal_api['authorization']}"
             headers["client-token"] = self.internal_api["client-token"]
-            json, status_code = await self._make_request(
+            response = await self._make_request(
+                "GET",
                 f"https://api-partner.spotify.com/pathfinder/v1/query",
                 headers=headers,
                 params=params,
             )
+            json = await response.json(loads=orjson.loads)
+            status_code = response.status
             if json["data"] is None:
                 return {"error": {"message": "Wrong artist ID"}}, 400
             elif status_code == 401 and not retry:
@@ -205,21 +228,56 @@ class Spotify:
             visuals = json["data"]["artistUnion"]["visuals"]
             images = []
             if visuals["avatarImage"]:
-                images += [image['url'] for image in visuals["avatarImage"]["sources"]]
+                images += [image["url"] for image in visuals["avatarImage"]["sources"]]
             if visuals["gallery"]:
                 for i in visuals["gallery"]["items"]:
                     for source in i["sources"]:
-                        images.append(source['url'])
+                        images.append(source["url"])
             if visuals["headerImage"]:
-                images += [image['url'] for image in visuals["headerImage"]["sources"]]
+                images += [image["url"] for image in visuals["headerImage"]["sources"]]
             return {"data": images}, 200
         else:
             return {"error": {"message": "Incorrect type"}}, 400
 
-    async def _make_request(self, url: str, headers: dict, params: dict | None = None):
-        response = await self.session.get(
-            url,
-            headers=headers,
-            params=params,
-        )
-        return (await response.json(loads=orjson.loads), response.status)
+    async def _make_request(self, method: str, url: str, **kwargs):
+        if self.session is None:
+            self.session = ClientSession(json_serialize=orjson.dumps)
+        response = await self.session.request(method, url, **kwargs)
+        return response
+
+
+class SpotifyInfo(BaseModel):
+    id: str
+    type: str
+
+
+spotify = Spotify()
+app = FastAPI(
+    redoc_url=None,
+    docs_url=None,
+)
+app.mount("/static", StaticFiles(directory="./static"), name="static")
+
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+
+async def open_template(filename: str):
+    async with aiofiles.open(TEMPLATES_PATH + filename, "r") as f:
+        content = await f.read()
+    return content
+
+
+@app.get("/")
+async def spotify_page():
+    return HTMLResponse(await open_template("spotify.html"))
+
+
+@app.post("/")
+@limiter.limit("5/minute")
+async def spotify_get_images(request: Request, data: SpotifyInfo):
+    if len(data.id) != 22:
+        return JSONResponse(orjson.dumps({"error": {"message": "Invalid ID"}}), 400)
+    data, status = await spotify.get_images(data.id, data.type)
+    return Response(orjson.dumps(data), status, media_type="application/json")

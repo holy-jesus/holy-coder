@@ -21,7 +21,7 @@ async function startDownloadingVideo(button) {
     }
     if (id.length == 11) {
         let xhr = new XMLHttpRequest();
-        xhr.open("POST", "/youtube");
+        xhr.open("POST", "/youtube/");
         xhr.setRequestHeader("Accept", "application/json");
         xhr.setRequestHeader("Content-Type", "application/json");
 
@@ -68,7 +68,7 @@ async function showLoadingWindow(id, type) {
     }
     while (true) {
         await sleep(4);
-        xhr.open("GET", `/youtube?id=${id}&type=${type}`);
+        xhr.open("GET", `/youtube/?id=${id}&type=${type}`);
         xhr.setRequestHeader("Accept", "application/json");
         xhr.setRequestHeader("Content-Type", "application/json");
         xhr.send(null);

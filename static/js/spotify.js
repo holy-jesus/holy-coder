@@ -22,7 +22,7 @@ function sendSongUrl(button) {
     }
     if (["track", "album", "artist", "playlist", "user"].indexOf(type) != -1 && id.length == 22) {
         let xhr = new XMLHttpRequest();
-        xhr.open("POST", "/spotify");
+        xhr.open("POST", "/spotify/");
         xhr.setRequestHeader("Accept", "application/json");
         xhr.setRequestHeader("Content-Type", "application/json");
 
