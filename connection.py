@@ -9,5 +9,6 @@ if TYPE_CHECKING:
 
 dotenv.load_dotenv(os.path.expanduser("~/.env"))
 
-connection = AsyncIOMotorClient(os.getenv("mongodb_link"), connect=False)
-db: "core.Database" = connection.holy_coder
+connection: "core.Database" = AsyncIOMotorClient(
+    os.getenv("mongodb_link"), connect=False
+)["holy_coder"]

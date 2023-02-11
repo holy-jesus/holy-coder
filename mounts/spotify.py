@@ -13,7 +13,6 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
@@ -246,11 +245,6 @@ class Spotify:
         return response
 
 
-class SpotifyInfo(BaseModel):
-    id: str
-    type: str
-
-
 spotify = Spotify()
 app = FastAPI(
     redoc_url=None,
@@ -276,8 +270,8 @@ async def spotify_page():
 
 @app.post("/")
 @limiter.limit("5/minute")
-async def spotify_get_images(request: Request, data: SpotifyInfo):
-    if len(data.id) != 22:
+async def spotify_get_images(request: Request, data: dict):
+    if len(data["id"]) != 22:
         return JSONResponse(orjson.dumps({"error": {"message": "Invalid ID"}}), 400)
-    data, status = await spotify.get_images(data.id, data.type)
+    data, status = await spotify.get_images(data["id"], data["type"])
     return Response(orjson.dumps(data), status, media_type="application/json")
