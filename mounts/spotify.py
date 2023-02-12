@@ -254,7 +254,7 @@ app = FastAPI(
 
 @app.exception_handler(404)
 async def NotFound(request: Request, exc):
-    return RedirectResponse("/")
+    return RedirectResponse("/spotify/")
 
 
 app.mount("/static", StaticFiles(directory="./static"), name="static")
