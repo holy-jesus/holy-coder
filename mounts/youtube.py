@@ -5,7 +5,7 @@ import aiofiles
 import yt_dlp
 from aiofiles import os
 from fastapi import BackgroundTasks, FastAPI, Request
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -80,6 +80,13 @@ app = FastAPI(
     redoc_url=None,
     docs_url=None,
 )
+
+
+@app.exception_handler(404)
+async def NotFound(request: Request, exc):
+    return RedirectResponse("/")
+
+
 app.mount("/static", StaticFiles(directory="./static"), name="static")
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
@@ -107,9 +114,7 @@ async def youtube(id: str = None, type: int = None):
 
 @app.post("/")
 @limiter.limit("2/minute")
-async def youtube_post(
-    request: Request, data: dict, backgroud_tasks: BackgroundTasks
-):
+async def youtube_post(request: Request, data: dict, backgroud_tasks: BackgroundTasks):
     if data["type"] not in (0, 1):
         return InvalidType
     elif len(data["id"]) != 11:

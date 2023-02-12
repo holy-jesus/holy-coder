@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup
 from cache import AsyncTTL
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request, Response
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -250,6 +250,13 @@ app = FastAPI(
     redoc_url=None,
     docs_url=None,
 )
+
+
+@app.exception_handler(404)
+async def NotFound(request: Request, exc):
+    return RedirectResponse("/")
+
+
 app.mount("/static", StaticFiles(directory="./static"), name="static")
 
 limiter = Limiter(key_func=get_remote_address)

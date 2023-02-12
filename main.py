@@ -3,8 +3,8 @@ import glob
 
 import aiofiles
 from aiofiles import os
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 
@@ -23,6 +23,11 @@ TEMPLATES_PATH = BASE_PATH + "/static/html/"
 main = FastAPI(
     title="holy-coder", redoc_url=None, docs_url=None, debug=DEBUG, routes=[]
 )
+
+
+@main.exception_handler(404)
+async def NotFound(request: Request, exc):
+    return RedirectResponse("/")
 
 
 async def open_template(filename: str):
@@ -56,9 +61,20 @@ async def index():
     return HTMLResponse(await open_template("index.html"))
 
 
+@main.get("/youtube")
+async def redirect():
+    # Без этого он перекидывает на localhost/youtube/ в не зависимости от хоста.
+    return RedirectResponse("/youtube/")
+
+
+@main.get("/spotify")
+async def redirect():
+    return RedirectResponse("/youtube/")
+
+
 main.mount("/static", StaticFiles(directory="./static"), name="static")
-main.mount("/youtube", youtube)
-main.mount("/spotify", spotify)
+main.mount("/youtube/", youtube)
+main.mount("/spotify/", spotify)
 
 if DEBUG:
     import uvicorn
