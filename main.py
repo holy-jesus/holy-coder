@@ -69,7 +69,7 @@ async def redirect():
 
 @main.get("/spotify")
 async def redirect():
-    return RedirectResponse("/youtube/")
+    return RedirectResponse("/spotify/")
 
 
 main.mount("/static", StaticFiles(directory="./static"), name="static")
