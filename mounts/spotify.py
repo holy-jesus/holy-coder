@@ -240,7 +240,7 @@ class Spotify:
 
     async def _make_request(self, method: str, url: str, **kwargs):
         if self.session is None:
-            self.session = ClientSession(json_serialize=orjson.dumps)
+            self.session = ClientSession()
         response = await self.session.request(method, url, **kwargs)
         return response
 
