@@ -55,4 +55,4 @@ webencodings==0.5.1
 websockets==10.4
 wrapt==1.14.1
 yarl==1.8.2
-yt-dlp==2023.1.6
+yt-dlp==2023.7.6
