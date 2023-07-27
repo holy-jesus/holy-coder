@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>holy-coder</title>
+    <link rel="stylesheet" href="https://unpkg.com/xp.css">
+    <meta charset="UTF-8" />
+    <style>
+        @font-face {
+            font-family: "Pixeloid Sans";
+            src: URL('static/font/basis33.ttf') format('truetype');
+        }
+
+        .center {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            -webkit-transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%);
+        }
+
+        .pixelatedText {
+            text-decoration: none;
+            color: #000;
+            font-family: "Pixeloid Sans", Arial;
+            font-size: 14px;
+            font-stretch: condensed;
+        }
+
+        .fakeButton {
+            cursor: pointer;
+        }
+
+        input,
+        label,
+        textarea {
+            font-family: "Pixeloid Sans", Arial;
+            font-size: 14px;
+            font-stretch: condensed;
+        }
+
+        select {
+            font-family: "Pixeloid Sans", Arial;
+            font-size: 14px;
+            font-stretch: condensed;
+        }
+
+        option {
+            font-family: "Pixeloid Sans", Arial;
+            font-size: 14px;
+            font-stretch: condensed;
+        }
+
+        ul.tree-view {
+            font-family: "Pixeloid Sans", Arial;
+            font-size: 14px;
+            font-stretch: condensed;
+        }
+
+        .status-bar-field {
+            font-family: "Pixeloid Sans", Arial;
+            font-size: 14px;
+            font-stretch: condensed;
+        }
+
+        button {
+            font-family: "Pixeloid Sans", Arial;
+            font-size: 14px;
+            font-stretch: condensed;
+        }
+    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+</head>
+
+<body
+    style="background-image: url('static/images/Bliss.png');  background-size: auto; background-position: top; background-repeat: no-repeat;">
+    <div id="mainWindow" class="window center" style="width: 320px;" {{ ' hidden="true"' if window !='main' else '' }}>
+        <div class="title-bar">
+            <div class="title-bar-text">{{ T["main_window_name"] }}</div>
+            <div class="title-bar-controls">
+            </div>
+        </div>
+        <div class="window-body">
+
+            <ul class="tree-view">
+                <li><a href="https://holy-bot.ru">{{ T["holy_bot"] }}</a></li>
+                <li><a onclick="showSpotifyWindow()" class="fakeButton">{{ T["spotify"] }}</a>
+                </li>
+                <li><a onclick="showYoutubeWindow()" class="fakeButton">{{ T["youtube"] }}</a></li>
+                <li><a onclick="showLanguageWindow()">Change language / Поменять язык</a></li>
+            </ul>
+
+        </div>
+        <div class="status-bar">
+            <p class="status-bar-field">{{ T["made_by"] }} <a href="https://github.com/holy-jesus">holy_jesus</a></p>
+            <p class="status-bar-field"><a href="https://github.com/holy-jesus/holy_coder">{{ T["source_code"] }}</a>
+            </p>
+            <p class="status-bar-field"><a href="https://pay.cloudtips.ru/p/04eb86a5">{{ T["support"] }}</a></p>
+        </div>
+    </div>
+    <div id="spotifyWindow" class="window center" style="width: 260px;" {{ ' hidden="true"' if window !='spotify'
+        else '' }}>
+        <div class="title-bar">
+            <div class="title-bar-text">{{ T["spotify_window_name"] }}</div>
+            <div class="title-bar-controls">
+                <button aria-label="Close" onclick="hideSpotifyWindow()"></button>
+            </div>
+        </div>
+        <div class="window-body">
+            <div class="field-row-stacked">
+                <label style="margin: auto; display: block;" for="songurl">{{ T["spotify_label"] }}</label>
+                <input style="margin: auto; display: block; width: 220px;" id="songurl" type="url" />
+                <section class="field-row" style="justify-content: flex-end">
+                    <button onclick="sendSongUrl(this)">{{ T["spotify_get_images"] }}</button>
+                </section>
+            </div>
+        </div>
+    </div>
+    <div id="spotifyImagesWindow" class="window center" hidden="true">
+        <div class="title-bar">
+            <div class="title-bar-text">{{ T["spotify_image_window_name"] }}</div>
+            <div class="title-bar-controls">
+                <button aria-label="Close" onclick="hideSpotifyImagesWindow()"></button>
+            </div>
+        </div>
+        <div class="window-body" id="articles">
+            <menu role="tablist" id="tabList">
+
+            </menu>
+        </div>
+    </div>
+    <div id="youtubeWindow" class="window center" style="width: 260px;" {{ ' hidden="true"' if window !='youtube'
+        else '' }}>
+        <div class="title-bar">
+            <div class="title-bar-text">{{ T["youtube_window_name"] }}</div>
+            <div class="title-bar-controls">
+                <button aria-label="Close" onclick="hideYoutubeWindow()"></button>
+            </div>
+        </div>
+        <div class="window-body">
+            <div class="field-row-stacked">
+                <label style="margin: auto; display: block;" for="videoUrl">{{ T["youtube_label"] }}</label>
+                <input style="margin: auto; display: block; width: 220px;" id="videoUrl" type="url" />
+                <div class="field-row" style="margin: auto; display: block;">
+                    <input id="type0" type="radio" name="type" value="0" checked>
+                    <label for="type0">{{ T["youtube_video"] }}</label>
+                    <a></a>
+                    <input id="type1" type="radio" name="type" value="1">
+                    <label for="type1">{{ T["youtube_audio"] }}</label>
+                </div>
+                <br>
+                <section class="field-row" style="justify-content: flex-end;">
+                    <button onclick="startDownloadingVideo(this)">{{ T["youtube_download"] }}</button>
+                </section>
+            </div>
+        </div>
+    </div>
+    <div id="loadingWindow" class="window center" style="width: 240px;" hidden="true">
+        <div class="title-bar">
+            <div class="title-bar-text">{{ T["loading_window_name"] }}</div>
+        </div>
+        <div class="window-body">
+            <progress style="margin: auto; width: 220px; display: block;"></progress>
+        </div>
+    </div>
+    <div id="youtubeVideoWindow" class="window center" style="width: 240px;" hidden="true">
+        <div class="title-bar">
+            <div class="title-bar-text">{{ T["youtube_file_ready"] }}</div>
+            <div class="title-bar-controls">
+                <button aria-label="Close" onclick="hideVideoWindow()"></button>
+            </div>
+        </div>
+        <div class="window-body">
+            <p class="pixelatedText">{{ T["youtube_1_hour"] }}</p>
+            <p class="pixelatedText">{{ T["youtube_url"] }}: <a href="" id="urlForDownloading"></a></p>
+            <section class="field-row" style="justify-content: flex-end;">
+                <a href="" id="aForButton">
+                    <button>{{ T["youtube_download_file"] }}</button>
+                </a>
+            </section>
+        </div>
+    </div>
+    <div id="languageWindow" class="window center" style="width: 200px;" hidden="true">
+        <div class="title-bar">
+            <div class="title-bar-text">{{ T["language_window_name"] }}</div>
+            <div class="title-bar-controls">
+                <button aria-label="Close" onclick="hideLanguageWindow()"></button>
+            </div>
+        </div>
+        <div class="window-body">
+            <div style="display:flex; place-content: space-around;">
+                <button onclick="russianLanguage()">Русский</button>
+                <button onclick="englishLanguage()">English</button>
+            </div>
+
+        </div>
+    </div>
+    <script src="static/js/index.js"></script>
+    <script src="static/js/language.js"></script>
+    <script src="static/js/youtube.js"></script>
+    <script src="static/js/spotify.js"></script>
+</body>
+
+</html>

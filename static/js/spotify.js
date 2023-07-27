@@ -22,20 +22,22 @@ function sendSongUrl(button) {
     }
     if (["track", "album", "artist", "playlist", "user"].indexOf(type) != -1 && id.length == 22) {
         let xhr = new XMLHttpRequest();
-        xhr.open("POST", "/spotify/");
+        xhr.open("POST", "/spotify");
         xhr.setRequestHeader("Accept", "application/json");
         xhr.setRequestHeader("Content-Type", "application/json");
 
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4 && xhr.status === 429) {
-                alert("Too many requests, try again later.");
-            } else if (xhr.readyState === 4) {
+                alert(MS["too_many_requests"]);
+            } else if (xhr.readyState === 4 && xhr.status === 200) {
                 showSpotifyImagesWindow(JSON.parse(xhr.responseText));
+            } else if (xhr.readyState === 4) {
+                alert(MS["error"])
             }
         };
         xhr.send(JSON.stringify({ "id": id, "type": type }));
     } else {
-        alert("Wrong url format.")
+        alert(MS["wrong_url"])
     }
     button.removeAttribute("disabled");
 }

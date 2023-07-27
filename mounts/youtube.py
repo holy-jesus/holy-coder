@@ -1,17 +1,12 @@
 import asyncio
 from os import getcwd
 
-import aiofiles
 import yt_dlp
 from aiofiles import os
-from fastapi import BackgroundTasks, FastAPI, Request
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
-from fastapi.staticfiles import StaticFiles
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.errors import RateLimitExceeded
-from slowapi.util import get_remote_address
+from fastapi import BackgroundTasks, APIRouter, Request
+from fastapi.responses import FileResponse, JSONResponse
 
-
+from main import limiter, templates, get_language
 from connection import db
 
 PATH = "/tmp/youtube/"
@@ -40,7 +35,7 @@ def download_video(loop: asyncio.AbstractEventLoop, info):
     downloadable = True
     video_id = info["_id"]
     audio_only = info["type"]
-    ext = {0: "mp4", 1: "mp3"}.get(audio_only, None)
+    ext = {0: "mp4", 1: "mp3"}.get(audio_only)
     format = "bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4"
     postprocessors = []
     if audio_only:
@@ -73,46 +68,31 @@ def download_video(loop: asyncio.AbstractEventLoop, info):
 
 DEBUG = __name__ == "__main__"
 BASE_PATH = getcwd()
-TEMPLATES_PATH = BASE_PATH + "/static/html/"
+
+youtube = APIRouter()
 
 
-app = FastAPI(
-    redoc_url=None,
-    docs_url=None,
-)
-
-
-@app.exception_handler(404)
-async def NotFound(request: Request, exc):
-    return RedirectResponse("/youtube/")
-
-
-app.mount("/static", StaticFiles(directory="./static"), name="static")
-limiter = Limiter(key_func=get_remote_address)
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
-
-
-async def open_template(filename: str):
-    async with aiofiles.open(TEMPLATES_PATH + filename, "r") as f:
-        content = await f.read()
-    return content
-
-
-@app.get("/")
-async def youtube(id: str = None, type: int = None):
+@youtube.get("/youtube")
+async def youtube_index(request: Request, id: str = None, type: int = None):
     if id is None:
-        return HTMLResponse(await open_template("youtube.html"))
+        T = get_language(request)
+        return templates.TemplateResponse(
+            "index.html", {"request": request, "window": "youtube", "T": T}
+        )
+    elif len(id) != 11:
+        return InvalidID
     elif type not in (0, 1):
         return InvalidType
     video = await db.youtube.find_one({"_id": id, "type": type})
     if not video:
         return InvalidID
     else:
+        if video["status"]:
+            return JSONResponse(video["filename"])
         return JSONResponse(video["status"])
 
 
-@app.post("/")
+@youtube.post("/youtube")
 @limiter.limit("2/minute")
 async def youtube_post(request: Request, data: dict, backgroud_tasks: BackgroundTasks):
     if data["type"] not in (0, 1):
@@ -133,11 +113,13 @@ async def youtube_post(request: Request, data: dict, backgroud_tasks: Background
         await db.youtube.update_one({"_id": data["id"]}, {"$set": info}, upsert=True)
         return JSONResponse(False)
     else:
+        if video["status"]:
+            return JSONResponse(video["filename"])
         return JSONResponse(video["status"])
 
 
-@app.get("/download")
-async def youtube_download(id: str, type: int):
+@youtube.get("/youtube/{filename}")
+async def youtube_download(id: str, type: int, filename: str):
     if type not in (0, 1):
         return InvalidType
     elif len(id) != 11:

@@ -12,3 +12,4 @@ dotenv.load_dotenv(os.path.expanduser("~/.env"))
 db: "core.Database" = AsyncIOMotorClient(
     os.getenv("mongodb_link"), connect=False
 ).holy_coder
+    

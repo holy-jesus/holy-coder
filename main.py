@@ -1,12 +1,43 @@
 from os import getcwd
 import glob
 
-import aiofiles
 from aiofiles import os
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
+from translation import TRANSLATION
+
+DEBUG = __name__ == "__main__"
+BASE_PATH = getcwd()
+
+app = FastAPI(title="holy-coder", redoc_url=None, docs_url=None, debug=DEBUG, routes=[])
+
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+templates = Jinja2Templates(directory="templates")
+
+def get_language(request: Request):
+    language = request.cookies.get("language", None)
+    if not language:
+        accept_language = request.headers.get("accept-language", None)
+        if not accept_language:
+            return TRANSLATION["EN"]
+        splitted = accept_language.split(",")
+        for language in splitted:
+            if language.startswith("en"):
+                return TRANSLATION["EN"]
+            elif language.startswith("ru"):
+                return TRANSLATION["RU"]
+        return TRANSLATION["EN"]
+    elif language in ("ru", "en"):
+        return TRANSLATION[language.upper()]
 
 try:
     from mounts import youtube, spotify
@@ -15,25 +46,10 @@ except ImportError:
     from .mounts import youtube, spotify
     from .connection import db
 
-DEBUG = __name__ == "__main__"
-BASE_PATH = getcwd()
-TEMPLATES_PATH = BASE_PATH + "/static/html/"
 
-
-main = FastAPI(
-    title="holy-coder", redoc_url=None, docs_url=None, debug=DEBUG, routes=[]
-)
-
-
-@main.exception_handler(404)
+@app.exception_handler(404)
 async def NotFound(request: Request, exc):
     return RedirectResponse("/")
-
-
-async def open_template(filename: str):
-    async with aiofiles.open(TEMPLATES_PATH + filename, "r") as f:
-        content = await f.read()
-    return content
 
 
 async def delete_all_temp_files():
@@ -41,7 +57,7 @@ async def delete_all_temp_files():
         await os.remove(file)
 
 
-@main.on_event("startup")
+@app.on_event("startup")
 async def startup_event():
     await db.drop_collection("youtube")
     if await os.path.exists("/tmp/youtube/"):
@@ -50,33 +66,23 @@ async def startup_event():
         await os.mkdir("/tmp/youtube/")
 
 
-@main.on_event("shutdown")
+@app.on_event("shutdown")
 async def shutdown_event():
     await db.drop_collection("youtube")
     await delete_all_temp_files()
 
 
-@main.get("/")
-async def index():
-    return HTMLResponse(await open_template("index.html"))
+@app.get("/")
+async def index(request: Request):
+    T = get_language(request)
+    return templates.TemplateResponse("index.html", {"request": request, "window": "main", "T": T})
 
 
-@main.get("/youtube")
-async def redirect():
-    # Без этого он перекидывает на localhost/youtube/ в не зависимости от хоста.
-    return RedirectResponse("/youtube/")
-
-
-@main.get("/spotify")
-async def redirect():
-    return RedirectResponse("/spotify/")
-
-
-main.mount("/static", StaticFiles(directory="./static"), name="static")
-main.mount("/youtube/", youtube)
-main.mount("/spotify/", spotify)
+app.mount("/static", StaticFiles(directory="./static"), name="static")
+app.include_router(youtube)
+app.include_router(spotify)
 
 if DEBUG:
     import uvicorn
 
-    uvicorn.run(main, host="0.0.0.0")
+    uvicorn.run(app, host="0.0.0.0")

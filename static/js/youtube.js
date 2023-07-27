@@ -21,19 +21,19 @@ async function startDownloadingVideo(button) {
     }
     if (id.length == 11) {
         let xhr = new XMLHttpRequest();
-        xhr.open("POST", "/youtube/");
+        xhr.open("POST", "/youtube");
         xhr.setRequestHeader("Accept", "application/json");
         xhr.setRequestHeader("Content-Type", "application/json");
 
         xhr.onreadystatechange = async function () {
             if (xhr.readyState === 4 && xhr.status === 429) {
-                alert("Too many requests, try again later.");
+                alert(MS["too_many_requests"]);
             } else if (xhr.readyState === 4) {
                 var json = JSON.parse(xhr.responseText)
-                if (json == true) {
-                    await showVideoWindow(id, type)
+                if (typeof json === 'string' || json instanceof String) {
+                    await showVideoWindow(id, type, json)
                 } else if (json == null) {
-                    alert("Sorry I can't download this video")
+                    alert(MS["cant_download"])
                 }
                 else {
                     await showLoadingWindow(id, type)
@@ -42,7 +42,7 @@ async function startDownloadingVideo(button) {
         };
         xhr.send(JSON.stringify({ "id": id, "type": parseInt(type, 10) }));
     } else {
-        alert("Wrong url format.")
+        alert(MS["wrong_url"])
     }
     button.removeAttribute("disabled");
 }
@@ -55,20 +55,21 @@ async function showLoadingWindow(id, type) {
     xhr.onreadystatechange = async function () {
         if (xhr.readyState === 4 && xhr.status === 200) {
             var json = JSON.parse(xhr.responseText)
-            if (json == true) {
+            if (typeof json === 'string' || json instanceof String) {
                 done = true;
+                filename = json;
             } else if (json == null) {
-                alert("Sorry I can't download this video");
+                alert(MS["cant_download"]);
                 done = null;
             }
         } else if (xhr.readyState === 4) {
-            alert("Something went wrong. Please try again later");
+            alert(MS["error"]);
             done = null;
         }
     }
     while (true) {
         await sleep(4);
-        xhr.open("GET", `/youtube/?id=${id}&type=${type}`);
+        xhr.open("GET", `/youtube?id=${id}&type=${type}`);
         xhr.setRequestHeader("Accept", "application/json");
         xhr.setRequestHeader("Content-Type", "application/json");
         xhr.send(null);
@@ -76,22 +77,22 @@ async function showLoadingWindow(id, type) {
         if (done != false) break;
     };
     if (done == true) {
-        await showVideoWindow(id, type);
+        await showVideoWindow(id, type, filename);
     } else {
         loadingWindow.setAttribute("hidden", "true");
         youtubeWindow.removeAttribute("hidden")
     }
 }
 
-async function showVideoWindow(id, type) {
+async function showVideoWindow(id, type, filename) {
     youtubeWindow.setAttribute("hidden", "true");
     loadingWindow.setAttribute("hidden", "true");
     youtubeVideoWindow.removeAttribute("hidden")
     a = document.getElementById("aForButton")
-    a.setAttribute("href", `/youtube/download?id=${id}&type=${type}`)
-    element = document.getElementById("urlForDownloading");
-    element.innerHTML = `https://holy-coder.ru/youtube/download?id=${id}&type=${type}`
-    element.setAttribute("href", `/youtube/download?id=${id}&type=${type}`)
+    a.setAttribute("href", `/youtube/${filename}?id=${id}&type=${type}`)
+    var element = document.getElementById("urlForDownloading");
+    element.innerText = `https://holy-coder.ru/youtube/${filename}?id=${id}&type=${type}`
+    element.setAttribute("href", `/youtube/${filename}?id=${id}&type=${type}`)
 }
 
 function hideVideoWindow() {
