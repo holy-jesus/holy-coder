@@ -71,7 +71,7 @@ def download_video(loop: asyncio.AbstractEventLoop, info):
 
 
 def remove_useless_text(string: str):
-    USELESS = ("video", "music", "audio", "official", "hd", "lyric")
+    USELESS = ("video", "music", "audio", "official", "hd", "lyric", "radio", "edit")
     idx = -1
     i = 0
     while True:
@@ -86,6 +86,27 @@ def remove_useless_text(string: str):
             break
         if all(
             word.lower().replace("(", "").replace(")", "") in USELESS
+            for word in string[idx : closing_bracket + 1].split()
+        ):
+            string = string[0:idx] + string[closing_bracket + 1 : len(string) + 1]
+        if i >= 100:
+            # Значит что-то пошло не так
+            return string.strip()
+        i += 1
+    idx = -1
+    i = 0
+    while True:
+        idx = string.find("[", idx + 1)
+        if idx == -1:
+            break
+        another_open_bracket = string.find("[", idx + 1)
+        closing_bracket = string.find("]", idx + 1)
+        if closing_bracket == -1 or (
+            another_open_bracket != -1 and another_open_bracket < closing_bracket
+        ):
+            break
+        if all(
+            word.lower().replace("[", "").replace("]", "") in USELESS
             for word in string[idx : closing_bracket + 1].split()
         ):
             string = string[0:idx] + string[closing_bracket + 1 : len(string) + 1]
