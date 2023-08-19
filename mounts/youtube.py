@@ -91,7 +91,7 @@ def remove_useless_text(string: str):
             string = string[0:idx] + string[closing_bracket + 1 : len(string) + 1]
         if i >= 100:
             # Значит что-то пошло не так
-            return string.strip()
+           break
         i += 1
     idx = -1
     i = 0
@@ -112,7 +112,7 @@ def remove_useless_text(string: str):
             string = string[0:idx] + string[closing_bracket + 1 : len(string) + 1]
         if i >= 100:
             # Значит что-то пошло не так
-            return string.strip()
+            break
         i += 1
     return string.strip()
 
