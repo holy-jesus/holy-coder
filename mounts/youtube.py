@@ -1,7 +1,9 @@
 import asyncio
-from os import getcwd
 
+import requests
 import yt_dlp
+import eyed3
+from eyed3.id3.frames import ImageFrame
 from aiofiles import os
 from fastapi import BackgroundTasks, APIRouter, Request
 from fastapi.responses import FileResponse, JSONResponse
@@ -51,23 +53,64 @@ def download_video(loop: asyncio.AbstractEventLoop, info):
     }
     try:
         with yt_dlp.YoutubeDL(ydl_options) as ydl:
-            a = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}")
-            title = a["title"]
-            downloadable = not a["is_live"]
+            video_info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}")
+            title = video_info["title"]
+            downloadable = not video_info["is_live"]
     except Exception:
         downloadable = False
     if downloadable:
         info["status"] = True
         info["path"] = PATH + f"{video_id}.{ext}"
         info["filename"] = f"{title}.{ext}"
+        if audio_only:
+            add_metadata(info, video_info)
     else:
         info["status"] = None
     loop.create_task(update_db(info))
     loop.create_task(delete(video_id))
 
 
-DEBUG = __name__ == "__main__"
-BASE_PATH = getcwd()
+def remove_useless_text(string: str):
+    USELESS = ("video", "music", "audio", "official", "hd", "lyric")
+    idx = -1
+    while True:
+        idx = string.find("(", idx + 1)
+        if idx == -1:
+            break
+        another_open_bracket = string.find("(", idx + 1)
+        closing_bracket = string.find(")", idx + 1)
+        if closing_bracket == -1 or (
+            another_open_bracket != -1 and another_open_bracket < closing_bracket
+        ):
+            break
+        if all(
+            word.lower().replace("(", "").replace(")", "") in USELESS
+            for word in string[idx : closing_bracket + 1].split()
+        ):
+            string = string[0:idx] + string[closing_bracket + 1 : len(string) + 1]
+    return string.strip()
+
+
+def get_artist_and_title(video_info: dict):
+    title = remove_useless_text(video_info.get("fulltitle", video_info["title"]))
+    if " - " in title:
+        return title.split(" - ", 1)
+    return video_info["channel"], title
+
+
+def add_metadata(info: dict, video_info: dict):
+    try:
+        audio = eyed3.load(info["path"])
+        if (audio.tag == None):
+            audio.initTag()
+        response = requests.get(video_info["thumbnail"])
+        artist, title = get_artist_and_title(video_info)
+        audio.tag.title = title
+        audio.tag.artist = artist
+        audio.tag.images.set(ImageFrame.FRONT_COVER, response.content, 'image/jpeg')
+        audio.tag.save()
+    except Exception as e:
+        print(e)
 
 youtube = APIRouter()
 

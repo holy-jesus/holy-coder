@@ -78,6 +78,16 @@ async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request, "window": "main", "T": T})
 
 
+@app.get("/youtube/")
+async def youtube_redirect():
+    return RedirectResponse("/youtube")
+
+
+@app.get("/spotify/")
+async def youtube_redirect():
+    return RedirectResponse("/spotify")
+
+
 app.mount("/static", StaticFiles(directory="./static"), name="static")
 app.include_router(youtube)
 app.include_router(spotify)
