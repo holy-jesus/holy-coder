@@ -1,5 +1,7 @@
 import asyncio
+from io import BytesIO
 
+from PIL import Image, ImageOps
 import requests
 import yt_dlp
 import eyed3
@@ -129,14 +131,18 @@ def add_metadata(info: dict, video_info: dict):
         audio = eyed3.load(info["path"])
         if (audio.tag == None):
             audio.initTag()
-        response = requests.get(video_info["thumbnail"])
         artist, title = get_artist_and_title(video_info)
         audio.tag.title = title
         audio.tag.artist = artist
-        audio.tag.images.set(ImageFrame.FRONT_COVER, response.content, 'image/jpeg')
+        response = requests.get(video_info["thumbnail"])
+        thumbnail = Image.open(BytesIO(response.content))
+        thumbnail = ImageOps.fit(thumbnail, size=(min(thumbnail.size), min(thumbnail.size)))
+        thumbnail_bytes = BytesIO()
+        thumbnail.save(thumbnail_bytes, format='JPEG')
+        audio.tag.images.set(ImageFrame.FRONT_COVER, thumbnail_bytes.getvalue(), 'image/jpeg')
         audio.tag.save()
-    except Exception as e:
-        print(e)
+    except Exception:
+        pass
 
 youtube = APIRouter()
 
