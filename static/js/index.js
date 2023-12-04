@@ -1,4 +1,4 @@
-var mainWindow = document.getElementById("mainWindow"),
+const mainWindow = document.getElementById("mainWindow"),
     spotifyWindow = document.getElementById("spotifyWindow"),
     youtubeWindow = document.getElementById("youtubeWindow"),
     languageWindow = document.getElementById("languageWindow");

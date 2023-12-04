@@ -15,7 +15,32 @@ from translation import TRANSLATION
 DEBUG = __name__ == "__main__"
 BASE_PATH = getcwd()
 
-app = FastAPI(title="holy-coder", redoc_url=None, docs_url=None, debug=DEBUG, routes=[])
+try:
+    from mounts import youtube, spotify
+    from connection import db
+except ImportError:
+    from .mounts import youtube, spotify
+    from .connection import db
+
+async def delete_all_temp_files():
+    for file in glob.glob("/tmp/youtube/*"):
+        await os.remove(file)
+
+
+async def lifespan():
+    await db.drop_collection("youtube")
+    try:
+        if (await os.path.exists("/tmp/youtube/")):
+            await delete_all_temp_files()
+        else:
+            await os.mkdir("/tmp/youtube/")
+    except Exception:
+        pass
+    yield
+    await db.drop_collection("youtube")
+    await delete_all_temp_files()
+
+app = FastAPI(title="holy-coder", redoc_url=None, docs_url=None, debug=DEBUG, routes=[], lifespan=lifespan)
 
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
@@ -39,37 +64,10 @@ def get_language(request: Request):
     elif language in ("ru", "en"):
         return TRANSLATION[language.upper()]
 
-try:
-    from mounts import youtube, spotify
-    from connection import db
-except ImportError:
-    from .mounts import youtube, spotify
-    from .connection import db
-
 
 @app.exception_handler(404)
 async def NotFound(request: Request, exc):
     return RedirectResponse("/")
-
-
-async def delete_all_temp_files():
-    for file in glob.glob("/tmp/youtube/*"):
-        await os.remove(file)
-
-
-@app.on_event("startup")
-async def startup_event():
-    await db.drop_collection("youtube")
-    if await os.path.exists("/tmp/youtube/"):
-        await delete_all_temp_files()
-    else:
-        await os.mkdir("/tmp/youtube/")
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    await db.drop_collection("youtube")
-    await delete_all_temp_files()
 
 
 @app.get("/")
