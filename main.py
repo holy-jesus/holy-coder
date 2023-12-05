@@ -15,19 +15,12 @@ from translation import TRANSLATION
 DEBUG = __name__ == "__main__"
 BASE_PATH = getcwd()
 
-try:
-    from mounts import youtube, spotify
-    from connection import db
-except ImportError:
-    from .mounts import youtube, spotify
-    from .connection import db
-
 async def delete_all_temp_files():
     for file in glob.glob("/tmp/youtube/*"):
         await os.remove(file)
 
 
-async def lifespan():
+async def lifespan(_):
     await db.drop_collection("youtube")
     try:
         if (await os.path.exists("/tmp/youtube/")):
@@ -63,6 +56,14 @@ def get_language(request: Request):
         return TRANSLATION["EN"]
     elif language in ("ru", "en"):
         return TRANSLATION[language.upper()]
+
+
+try:
+    from mounts import youtube, spotify
+    from connection import db
+except ImportError:
+    from .mounts import youtube, spotify
+    from .connection import db
 
 
 @app.exception_handler(404)
