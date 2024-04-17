@@ -25,7 +25,7 @@ fake-headers==1.0.2
 fastapi==0.109.1
 filetype==1.2.0
 frozenlist==1.4.0
-gunicorn==21.2.0
+gunicorn==22.0.0
 h11==0.14.0
 html5lib==1.1
 httptools==0.6.1
