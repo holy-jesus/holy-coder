@@ -1,9 +1,5 @@
 <script setup lang="ts">
 
-function mousedown() {
-    console.log("I'm being clicked")
-}
-
 </script>
 
 <template>

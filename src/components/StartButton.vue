@@ -1,34 +1,45 @@
 <script setup lang="ts">
 import { ref } from "vue";
 
-const hover = ref(false);
 const pressed = ref(false);
+
+function mousedown() {
+    pressed.value = !pressed.value
+}
+
+function preloadImages() {
+    let image;
+    for (image of ["/src/assets/startbuttonhover.webp", "/src/assets/startbuttonpressed.webp"]) {
+        (new Image()).src = image;
+    }
+}
+
+preloadImages()
 </script>
 
 <template>
-    <div class="h-full w-[99px] overflow-hidden" @mouseover="hover = true" @mouseleave="hover = false"
-        @mousedown="pressed = !pressed">
-        <TransitionGroup name="startbuttonbackground">
-            <div class="absolute h-full w-[99px]" style="background-image: url(/src/assets/startbuttondefault.png);">
-            </div>
-            <div class="absolute h-full w-[99px]" style="background-image: url(/src/assets/startbuttonhover.png);"
-                v-if="hover && !pressed">
-            </div>
-            <div class="absolute h-full w-[99px]" style="background-image: url(/src/assets/startbuttonpressed.png);"
-                v-if="pressed">
-            </div>
-        </TransitionGroup>
+    <!--tslint:disable-->
+    <div class="start-button h-full w-[99px] flex-shrink-0 flex flex-row items-center justify-center pr-3 select-none"
+        @mousedown="mousedown()"
+        :style="{ 'background-image': pressed ? 'url(/src/assets/startbuttonpressed.webp)' : '' }">
+        <img src="/src/assets/startbuttonflag.webp" class="sshadow h-[22px]" />
+        <div class="sshadow text-white text-lg font-semibold italic h-[32px]" style="font-stretch: 50%;">пуск</div>
+
     </div>
+    <!--tslint:enable-->
 </template>
 
 <style lang="css" scoped>
-.startbuttonbackground-enter-active,
-.startbuttonbackground-leave-active {
-    transition: opacity 0.1s ease;
+.start-button {
+    font-family: "Tahoma", "Windows XP Tahoma", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    background-image: url(/src/assets/startbuttondefault.webp);
 }
 
-.startbuttonbackground-enter-from,
-.startbuttonbackground-leave-to {
-    opacity: 0;
+.start-button:hover {
+    background-image: url(/src/assets/startbuttonhover.webp)
+}
+
+.sshadow {
+    filter: drop-shadow(rgba(0, 0, 0, 0.5) 1px 1px 1px);
 }
 </style>

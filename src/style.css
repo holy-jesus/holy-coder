@@ -2,8 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+    font-family: "Windows XP Tahoma";
+    src: url(/src/assets/windows-xp-tahoma.ttf);
+}
+
 body {
-    background-image: url('public/Bliss.webp');
+    font-family: "Windows XP Tahoma", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    background-image: url('/src/assets/Bliss.webp');
     -webkit-background-size: cover;
     -moz-background-size: cover;
     -o-background-size: cover;
