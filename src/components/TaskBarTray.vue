@@ -17,7 +17,7 @@ setInterval(() => {
 
 <template>
     <div class="flex items-center task-bar-tray h-full pl-6 pr-3 select-none"
-        style="background-image: url(/src/assets/taskbartray.webp); background-size: cover;">
+        style="background-image: url(/src/assets/taskbar-tray.webp); background-size: cover;">
         <div class="text-white" style="font-size: 16px; font-smooth: none; contain: paint;">{{ currentTime }}</div>
     </div>
 </template>

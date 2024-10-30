@@ -16,7 +16,7 @@ import TaskBarTray from "./TaskBarTray.vue";
 
 <style scoped>
 .task-bar {
-    background-image: url("/src/assets/taskbarbackground.webp");
+    background-image: url("/src/assets/taskbar-background.webp");
     background-size: contain;
     font-size: 13px;
     height: 31px;

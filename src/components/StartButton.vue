@@ -21,8 +21,8 @@ preloadImages()
     <!--tslint:disable-->
     <div class="start-button h-full w-[99px] flex-shrink-0 flex flex-row items-center justify-center pr-3 select-none"
         @mousedown="mousedown()"
-        :style="{ 'background-image': pressed ? 'url(/src/assets/startbuttonpressed.webp)' : '' }">
-        <img src="/src/assets/startbuttonflag.webp" class="sshadow h-[22px]" />
+        :style="{ 'background-image': pressed ? 'url(/src/assets/start-button-pressed.webp)' : '' }">
+        <img src="/src/assets/start-button-flag.webp" class="sshadow h-[22px]" />
         <div class="sshadow text-white text-lg font-semibold italic h-[32px]" style="font-stretch: 50%;">пуск</div>
 
     </div>
@@ -32,11 +32,11 @@ preloadImages()
 <style lang="css" scoped>
 .start-button {
     font-family: "Tahoma", "Windows XP Tahoma", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-    background-image: url(/src/assets/startbuttondefault.webp);
+    background-image: url(/src/assets/start-button-default.webp);
 }
 
 .start-button:hover {
-    background-image: url(/src/assets/startbuttonhover.webp)
+    background-image: url(/src/assets/start-button-hover.webp)
 }
 
 .sshadow {
