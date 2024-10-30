@@ -17,6 +17,7 @@ body {
     background-position-x: center;
     background-position-y: 80%;
     background-repeat: no-repeat;
+    cursor: url(/src/assets/cursor.webp), auto;
 }
 
 .slight-shadow {
