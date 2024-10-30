@@ -18,3 +18,7 @@ body {
     background-position-y: 80%;
     background-repeat: no-repeat;
 }
+
+.slight-shadow {
+    filter: drop-shadow(rgba(0, 0, 0, 0.5) 1px 1px 1px);
+}

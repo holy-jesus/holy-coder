@@ -18,15 +18,13 @@ preloadImages()
 </script>
 
 <template>
-    <!--tslint:disable-->
     <div class="start-button h-full w-[99px] flex-shrink-0 flex flex-row items-center justify-center pr-3 select-none"
         @mousedown="mousedown()"
         :style="{ 'background-image': pressed ? 'url(/src/assets/start-button-pressed.webp)' : '' }">
-        <img src="/src/assets/start-button-flag.webp" class="sshadow h-[22px]" />
-        <div class="sshadow text-white text-lg font-semibold italic h-[32px]" style="font-stretch: 50%;">пуск</div>
-
+        <img src="/src/assets/start-button-flag.webp" class="slight-shadow h-[22px]" />
+        <div class="slight-shadow text-white text-lg font-semibold italic h-[32px]" style="font-stretch: 50%;">пуск
+        </div>
     </div>
-    <!--tslint:enable-->
 </template>
 
 <style lang="css" scoped>
@@ -37,9 +35,5 @@ preloadImages()
 
 .start-button:hover {
     background-image: url(/src/assets/start-button-hover.webp)
-}
-
-.sshadow {
-    filter: drop-shadow(rgba(0, 0, 0, 0.5) 1px 1px 1px);
 }
 </style>
